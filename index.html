@@ -47,10 +47,10 @@
   const width = parseFloat(svg.style("width"));
   const height = parseFloat(svg.style("height"))
   const margin = { top: 20, right: 20, bottom: 30, left: 40 };
-  const chartWidth = width/2.5;
-  const chartHeight = height/2;
+  const chartWidth = width/2;
+  const chartHeight = height/1.75;
 
-  const g = svg.append("g").attr("transform", `translate(${margin.left+width/3},${margin.top+height/8})`);
+  const g = svg.append("g").attr("transform", `translate(${margin.left+width/2},${margin.top+height/6})`);
 
   const x = d3.scaleBand().padding(0.1).range([0, chartWidth]);
   const y = d3.scaleLinear().range([chartHeight, 0]);
@@ -111,7 +111,9 @@
 
     g.append("g")
       .attr("transform", `translate(0,${chartHeight})`)
-      .call(d3.axisBottom(x));
+      .call(d3.axisBottom(x))
+      .selectAll("text")
+      .style("font-size","20px");
 
     g.append("g")
       .call(d3.axisLeft(y));
