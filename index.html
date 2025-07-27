@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Private vs Public Colleges and their Outcomes</title>
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+    }
+    svg {
+      width: 80%;
+      height: 80vh; 
+      border: 1px solid #ccc;
+      margin-bottom: 20px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .page-buttons button {
+      font-size: 16px;
+      padding: 6px 12px;
+      margin: 4px;
+      cursor: pointer;
+    }
+    .bar {
+      fill: steelblue;
+    }
+    .bar:hover {
+      fill: orange;
+    }
+  </style>
+</head>
+<body>
+
+<input type="file" id="upload" accept=".csv" />
+<svg id="chart" width="500" height="300"></svg>
+
+<div class="page-buttons" id="buttons"></div>
+
+<script>
+ 
+
+
+  const svg = d3.select("#chart");
+  const width = parseFloat(svg.style("width"));
+  const height = parseFloat(svg.style("height"))
+  const margin = { top: 20, right: 20, bottom: 30, left: 40 };
+  const chartWidth = width/1.75;
+  const chartHeight = height/1.4+30;
+
+  const g = svg.append("g").attr("transform", `translate(${margin.left+width/3},${margin.top+height/8})`);
+
+  const x = d3.scaleBand().padding(0.1).range([0, chartWidth]);
+  const y = d3.scaleLinear().range([chartHeight, 0]);
+
+  svg.append("text")
+  .attr("x", margin.left+5)
+  .attr("y", 60)
+  .attr("text-anchor", "left")
+  .attr("font-size", "40px")
+  .attr("font-weight", "bold")
+  .text("Private vs Public Colleges and their Outcomes");
+
+  svg.append("text")
+  .attr("x", margin.left+5)
+  .attr("y", 90)
+  .attr("text-anchor", "left")
+  .attr("font-size", "30px")
+  .attr("font-weight", "none")
+  .text("For many Americans there is a preception that private colleges are more prestigous and offer better outcomes but is that really true?");
+
+  const textBox= svg.append("foreignObject")
+  .attr("x", margin.left)
+  .attr("y", height/3)
+  .attr("width",width/4)
+  .attr("height", height*.75)
+  .style("display", "none");
+  
+
+  const textBoxDiv = textBox.append("xhtml:div")
+  .style("font-size", "25px")
+  .style("font-family", "sans-serif")
+  .style("color", "#333")
+  .style("border", "2px solid black")
+  .style("padding", "8px");
+
+  const textBoxContent ={
+    1: "Money is not everything in life but it is an important part of it, and it seems like universities agree as well given that financial outcomes are a major part of university recruiting. That is why in this slide we will review the financial outcomes of graduates based on what kind of college they went to."
+  }
+  function updateTextBox(slideIndex){
+    if(textBoxContent[slideIndex]){
+      textBox.style("display", "block");
+      textBoxDiv.html(textBoxContent[slideIndex]);
+    }
+  }
+  function drawChart(data) {
+    g.selectAll("*").remove();
+    x.domain(data.map(d => d.key));
+    y.domain([0, d3.max(data, d => d.value)]);
+
+    g.selectAll("rect")
+      .data(data)
+      .join("rect")
+      .attr("class", "bar")
+      .attr("x", d => x(d.key))
+      .attr("y", d => y(d.value))
+      .attr("width", x.bandwidth())
+      .attr("height", d => height - y(d.value));
+
+    g.append("g")
+      .attr("transform", `translate(0,${height})`)
+      .call(d3.axisBottom(x));
+
+    g.append("g")
+      .call(d3.axisLeft(y));
+
+    svg.append("text")
+      .attr("x", (width / 2) + margin.left)
+      .attr("y", 25)
+      .attr("text-anchor", "middle")
+      .attr("font-size", "20px")
+      .text("Average Income by College Sector");
+  }
+
+ d3.csv("CondensedData.csv").then(rawData => {
+    const incomeData = rawData
+      .filter(d => ["Public", "Private, nonprofit", "Private, for-profit"].includes(d.Sector))
+      .filter(d => d.MD_EARN_WNE_P10_2024 && !isNaN(+d.MD_EARN_WNE_P10_2024))
+      .map(d => ({
+        Sector: d.Sector,
+        Income: +d.MD_EARN_WNE_P10_2024
+      }));
+
+    const grouped = d3.nest()
+      .key(d => d.Sector)
+      .rollup(values => d3.mean(values, d => d.Income))
+      .entries(incomeData);
+
+    // Draw initial chart
+    drawChart(grouped);
+    updateTextBox(1);
+
+    // Page buttons logic
+    const buttonContainer = d3.select("#buttons");
+    for (let i = 1; i <= 1; i++) {
+      buttonContainer.append("button")
+        .text(`Page ${i}`)
+        .on("click", () => {
+          drawChart(grouped);
+          updateTextBox(i);
+        });
+    }
+  }).catch(error => {
+    console.error("CSV loading failed:", error);
+  });
+</script>
+
+</body>
+</html>
