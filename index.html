@@ -47,8 +47,8 @@
   const width = parseFloat(svg.style("width"));
   const height = parseFloat(svg.style("height"))
   const margin = { top: 20, right: 20, bottom: 30, left: 40 };
-  const chartWidth = width/1.75;
-  const chartHeight = height/1.4+30;
+  const chartWidth = width/2.5;
+  const chartHeight = height/2;
 
   const g = svg.append("g").attr("transform", `translate(${margin.left+width/3},${margin.top+height/8})`);
 
@@ -107,10 +107,10 @@
       .attr("x", d => x(d.key))
       .attr("y", d => y(d.value))
       .attr("width", x.bandwidth())
-      .attr("height", d => height - y(d.value));
+      .attr("height", d => chartHeight - y(d.value));
 
     g.append("g")
-      .attr("transform", `translate(0,${height})`)
+      .attr("transform", `translate(0,${chartHeight})`)
       .call(d3.axisBottom(x));
 
     g.append("g")
