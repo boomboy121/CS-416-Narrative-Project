@@ -50,7 +50,7 @@
   const chartWidth = width/2;
   const chartHeight = height/1.75;
 
-  const g = svg.append("g").attr("transform", `translate(${margin.left+width/2},${margin.top+height/6})`);
+  const g = svg.append("g").attr("transform", `translate(${margin.left+width/2.5},${margin.top+height/4})`);
 
   const x = d3.scaleBand().padding(0.1).range([0, chartWidth]);
   const y = d3.scaleLinear().range([chartHeight, 0]);
