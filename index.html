@@ -12,23 +12,44 @@
     svg {
       width: 80%;
       height: 80vh; 
-      border: 1px solid #ccc;
+      border: 2px solid black;
       margin-bottom: 20px;
       display: block;
       margin-left: auto;
       margin-right: auto;
+      background-color: whitesmoke;
     }
-    .page-buttons button {
-      font-size: 16px;
-      padding: 6px 12px;
-      margin: 4px;
-      cursor: pointer;
-    }
+    
     .bar {
       fill: steelblue;
     }
     .bar:hover {
       fill: orange;
+    }
+    #nav-buttons button {
+      font-size: 18px;
+      padding: 10px 20px;
+      margin: 5px;
+      border-radius: 8px;
+      background-color: lightgray;
+      border: 1px solid gray;
+    }
+
+    #nav-buttons button:hover {
+      background-color: orange;
+  }
+    #tooltip {
+        position: absolute;
+  display: none;
+  background: white;
+  border: 1px solid black;
+  padding: 6px 10px;
+  font-size: 16px;
+  pointer-events: none;
+  color: black;
+  border-radius: 4px;
+  box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+  z-index: 9999;
     }
   </style>
 </head>
@@ -36,9 +57,9 @@
 
 
 <svg id="chart" width="500" height="300"></svg>
-
+<div class="page-buttons" id="year-buttons"></div>
 <div class="page-buttons" id="buttons"></div>
-
+<div id="tooltip"></div>
 <script>
  
 
@@ -73,7 +94,7 @@
 
   const textBox= svg.append("foreignObject")
   .attr("x", margin.left)
-  .attr("y", height/3)
+  .attr("y", height/4)
   .attr("width",width/4)
   .attr("height", height*.75)
   .style("display", "none");
@@ -82,12 +103,16 @@
   const textBoxDiv = textBox.append("xhtml:div")
   .style("font-size", "25px")
   .style("font-family", "sans-serif")
-  .style("color", "#333")
+  .style("color", "black")
   .style("border", "2px solid black")
-  .style("padding", "8px");
+  .style("padding", "8px")
+  .style("background-color","white");
 
   const textBoxContent ={
-    1: "Money is not everything in life but it is an important part of it, and it seems like universities agree as well given that financial outcomes are a major part of university recruiting. That is why in this slide we will review the financial outcomes of graduates based on what kind of college they went to."
+    1: "Money is not everything in life but it is an important part of it, and it seems like universities agree as well given that financial outcomes are a major part of university recruiting. That is why in this slide we will review the financial outcomes of graduates based on what kind of college they went to. The bar chart to the right graphs the median income of college graduates based on what kind of university they went to. Based on the data from all four years we can see that private non profit colleges win out which falls in line with what most people expect.",
+    2: "Graduation rate is another metric in which we can judge the quality of a university, universities with high graduation rates tend to admit higher quality students and provide a better standard of education leading to high graduation rates. One intresting fact here is that for 2022 and 2023 private for profit univesrities had equal if not higher rates the public universities which is suprising given that many for profit universities have a negative reputation when it comes to quality of education.",
+    3: "While income and graduation rates are indicators of student outcomes at universities another statistic that many people are worried about is the cost of tuition. It's not a secret in the US college tuition has grown significantly making many question if a college education is still worth it. The follow bar graph will show the net cost of tuition after financial assistance per year for the average student. From what we can see private nonprofit universities have the highest tuition rate with for profits only slightly behind, what is intresting is how much cheaper public universities are with them a little under half the cost of private universities.",
+    4: "In this final slide we'll use a scatterplot to better visualize the debt vs income ratio as this is often a point that many people like to bring up when deciding if a college is worth attending. As we can see public universities have lower median income but lower average tuition while private non profit universities have higher income at the cost of higher tuition. The sole loser here are private for profit colleges which have the worst of both worlds with high tuition and low median earnings. Overall if your willing to pay the premium, private non profit universities seem to offer the best outcomes with public universities offering solid outcomes for those on a budget. For profit's however generally do not have much of a value proposition for them compared to the previous two."
   }
   function updateTextBox(slideIndex){
     if(textBoxContent[slideIndex]){
@@ -95,10 +120,10 @@
       textBoxDiv.html(textBoxContent[slideIndex]);
     }
   }
-  function drawChart(data) {
+  function drawChart(data,year,title,yaxis) {
     g.selectAll("*").remove();
     x.domain(data.map(d => d.key));
-    y.domain([0, d3.max(data, d => d.value)]);
+    y.domain([0, d3.max(data, d => d.value)]).nice();
 
     g.selectAll("rect")
       .data(data)
@@ -107,7 +132,21 @@
       .attr("x", d => x(d.key))
       .attr("y", d => y(d.value))
       .attr("width", x.bandwidth())
-      .attr("height", d => chartHeight - y(d.value));
+      .attr("height", d => chartHeight - y(d.value))
+      .on("mouseover", function(d) {
+        d3.select("#tooltip")
+          .style("display", "block")
+          .html(`<strong>${d.key}</strong>: ${Math.round(d.value)}`);
+      })
+      .on("mousemove", function() {
+        const [xPos, yPos] = d3.mouse(document.body);
+        d3.select("#tooltip")
+          .style("left", (xPos + 10) + "px")
+          .style("top", (yPos - 25) + "px");
+      })
+      .on("mouseout", function() {
+        d3.select("#tooltip").style("display", "none");
+      });
 
     g.append("g")
       .attr("transform", `translate(0,${chartHeight})`)
@@ -116,23 +155,201 @@
       .style("font-size","20px");
 
     g.append("g")
-      .call(d3.axisLeft(y));
+      .call(d3.axisLeft(y))
+      .selectAll("text")
+      .style("font-size","20px");
 
-    svg.append("text")
-      .attr("x", (width / 2) + margin.left)
-      .attr("y", 25)
+    g.append("text")
+      .attr("class", "y-axis-label")
+      .attr("transform", "rotate(-90)")
+      .attr("y", -margin.left + 10)
+      .attr("x", -chartHeight / 2)
+      .attr("dy", "-60px")
       .attr("text-anchor", "middle")
       .attr("font-size", "20px")
-      .text("Average Income by College Sector");
-  }
+      .attr("font-weight", "bold")
+      .text(`${yaxis}`);
 
+    svg.selectAll(".chart-title").remove();
+    svg.append("text")
+      .attr("class", "chart-title")
+      .attr("x", margin.left + width / 2.5 + chartWidth / 2)
+      .attr("y", chartHeight/3)
+      .attr("text-anchor", "middle")
+      .attr("font-size", "30px")
+      .attr("font-weight", "bold")
+      .text(`${title} ${year}`);
+
+    
+  }
+  function drawScatterPlot(data,year){
+    g.selectAll("*").remove();
+
+    const x = d3.scaleLinear()
+      .domain([0, 130000])
+      .range([0, chartWidth]);
+
+    const y = d3.scaleLinear()
+      .domain([0, 60000])
+      .range([chartHeight, 0]);
+
+    g.selectAll("circle")
+      .data(data.filter(d=>d.debt>=0))
+      .enter()
+      .append("circle")
+      .attr("cx", d => x(d.income))
+      .attr("cy", d => y(d.debt))
+      .attr("r", "5")
+      .attr("opacity",".7")
+      .attr("fill", d=>{
+        if (d.sector==="Public") return "blue";
+        else if (d.sector==="Private, nonprofit") return "green";
+        else if(d.sector=="Private, For-Profit") return "red";
+      });
+
+    g.append("g")
+      .attr("transform", `translate(0,${chartHeight})`)
+      .call(d3.axisBottom(x))
+      .selectAll("text")
+      .style("font-size","20px");
+
+    g.append("g")
+      .call(d3.axisLeft(y))
+      .selectAll("text")
+      .style("font-size","20px");
+
+    svg.selectAll(".chart-title").remove();
+    svg.append("text")
+      .attr("class", "chart-title")
+      .attr("x", margin.left + width / 2.5 + chartWidth / 2)
+      .attr("y", chartHeight/3)
+      .attr("text-anchor", "middle")
+      .attr("font-size", "30px")
+      .attr("font-weight", "bold")
+      .text(`Average Net Tuition vs Median Income in ${year}`);
+
+    g.append("text")
+      .attr("class", "y-axis-label")
+      .attr("transform", "rotate(-90)")
+      .attr("y", -margin.left + 10)
+      .attr("x", -chartHeight / 2)
+      .attr("dy", "-60px")
+      .attr("text-anchor", "middle")
+      .attr("font-size", "20px")
+      .attr("font-weight", "bold")
+      .text("Average Net Tuition ($)");
+
+    g.append("text")
+      .attr("x", chartWidth / 2)
+      .attr("y", chartHeight*1.075+10)
+      .attr("text-anchor", "middle")
+      .attr("font-size", "20px")
+      .attr("font-weight", "bold")
+      .text("Median Income ($)");
+
+    const legendlabel=[
+      {label: "Public", color: "blue"},
+      {label: "Private, nonprofit", color: "green"},
+      {label: "Private, For-Profit", color: "red"}
+    ]
+
+    const legend=g.append("g")
+      .attr("class","legend")
+      .attr("transform", `translate(${chartWidth - 150}, 20)`);
+
+    legend.append("rect")
+      .attr("width", 180)
+      .attr("height", legendlabel.length * 25 + 10)
+      .attr("fill", "white")
+      .attr("stroke", "black")
+      .attr("rx", 5)
+      .attr("ry", 5);
+
+    legend.selectAll("circle")
+      .data(legendlabel)
+      .enter()
+      .append("circle")
+      .attr("cx", 18)
+      .attr("cy", (d, i) => 18 + i * 25)
+      .attr("r", 7)
+      .attr("fill", d => d.color)
+      .attr("opacity", 0.7);
+
+      legend.selectAll("text")
+        .data(legendlabel)
+        .enter()
+        .append("text")
+        .attr("x", 35)
+        .attr("y", (d, i) => 18 + i * 25 + 1)
+        .text(d => d.label)
+        .attr("font-size", "14px")
+        .attr("alignment-baseline", "middle")
+        .attr("fill", "black");
+      }
+    
  d3.csv("CondensedData.csv").then(rawData => {
-    const incomeData = rawData
-      .filter(d => ["Public", "Private, nonprofit", "Private, for-profit"].includes(d.Sector))
-      .filter(d => d.MD_EARN_WNE_P10_2024 && !isNaN(+d.MD_EARN_WNE_P10_2024))
+  function getGraduationRateForYear(year){
+    const column= `C100_4_${year}`;
+    const gradRate=rawData
+    .filter(d => ["Public", "Private, nonprofit", "Private, for-profit"].includes(d.Sector))
+      .filter(d => d[column] && !isNaN(+d[column]))
       .map(d => ({
         Sector: d.Sector,
-        Income: +d.MD_EARN_WNE_P10_2024
+        Rate: +d[column]
+      }));
+    const averageGradRate = d3.nest()
+      .key(d => d.Sector)
+      .rollup(values => d3.mean(values, d => d.Rate)*100)
+      .entries(gradRate);  
+    return averageGradRate;
+  }
+
+  function getDebtIncomeRatio(year){
+    const income=`MD_EARN_WNE_P10_${year}`;
+    const debt=`AverageCostPerYear${year}`;
+
+    const data=rawData.filter(d =>
+    (d.Sector === "Public" ||
+     d.Sector === "Private, nonprofit" ||
+     d.Sector === "Private, for-profit") &&
+      d[income] && d[debt] &&
+      !isNaN(+d[income]) && !isNaN(+d[debt])
+    );
+
+    const datamap=data.map(d=> ({
+      income: +d[income],
+      debt: +d[debt],
+      sector: d.Sector === "Public" ? "Public"
+            : d.Sector === "Private, nonprofit" ? "Private, nonprofit"
+            : "Private, For-Profit"
+    }))
+    return datamap;
+  }
+
+  function getAverageDebtforYear(year){
+    const column=`AverageCostPerYear${year}`
+    const netDebt=rawData
+    .filter(d => ["Public", "Private, nonprofit", "Private, for-profit"].includes(d.Sector))
+      .filter(d => d[column] && !isNaN(+d[column]))
+      .map(d => ({
+        Sector: d.Sector,
+        Rate: +d[column]
+      }));
+    const averageNetDebt = d3.nest()
+      .key(d => d.Sector)
+      .rollup(values => d3.mean(values, d => d.Rate))
+      .entries(netDebt);  
+    return averageNetDebt;
+  }
+
+  function getIncomeDataForYear(year){
+    const column = `MD_EARN_WNE_P10_${year}`;
+    const incomeData = rawData
+      .filter(d => ["Public", "Private, nonprofit", "Private, for-profit"].includes(d.Sector))
+      .filter(d => d[column] && !isNaN(+d[column]))
+      .map(d => ({
+        Sector: d.Sector,
+        Income: +d[column]
       }));
 
     const grouped = d3.nest()
@@ -140,20 +357,102 @@
       .rollup(values => d3.mean(values, d => d.Income))
       .entries(incomeData);
 
-    // Draw initial chart
-    drawChart(grouped);
-    updateTextBox(1);
+    return grouped;
+  }
+  function showYearButtons(slideIndex) {
 
-    // Page buttons logic
-    const buttonContainer = d3.select("#buttons");
-    for (let i = 1; i <= 1; i++) {
-      buttonContainer.append("button")
-        .text(`Page ${i}`)
-        .on("click", () => {
-          drawChart(grouped);
-          updateTextBox(i);
-        });
+  svg.selectAll(".year-buttons").remove();
+
+  const yearButton = svg.append("foreignObject")
+    .attr("class", "year-buttons")
+    .attr("x",  width / 2.5 + chartWidth / 2.5-15) 
+    .attr("y", height/1.1) 
+    .attr("width", 300)
+    .attr("height", 50);
+
+  const div = yearButton.append("xhtml:div")
+    .style("display", "flex")
+    .style("justify-content", "center")
+    .style("gap", "10px");
+
+  // Add buttons
+  const years = [2021, 2022, 2023, 2024];
+  years.forEach(year => {
+    div.append("button")
+      .style("font-size", "18px")
+      .style("padding", "5px 10px")
+      .style("background-color","white")
+      .text(year)
+      .on("click", () => {
+        if (slideIndex===1){
+          drawChart(getIncomeDataForYear(year),year,"Median Income by College Sector in ", "Median Income ($)");
+        }
+        else if(slideIndex===2){
+          drawChart(getGraduationRateForYear(year),year,"Average 4 Year Graduation Rate by College Sector in ","Graduation Rate (%)");
+        }
+        else if(slideIndex===3){
+          drawChart(getAverageDebtforYear(year),year,"Average Net Tuition Cost","Net Tuition($)");
+        }
+        else if(slideIndex===4){
+          drawScatterPlot(getDebtIncomeRatio(year),year);
+        }
+      });
+  });
+}
+
+  function clearButtons() {
+    d3.select("#buttons").selectAll("*").remove();
+    d3.select("#buttons").style("display", "none"); 
+  }
+
+  function updateSlide(slideIndex){
+    if(slideIndex===1){
+      showYearButtons(slideIndex);
+      drawChart(getIncomeDataForYear(2024),2024,"Median Income by College Sector in ", "Median Income ($)");
+      updateTextBox(1);
     }
+    else if(slideIndex===2){
+      showYearButtons(slideIndex);
+      drawChart(getGraduationRateForYear(2024),2024,"Average 4 Year Graduation Rate by College Sector in ","Graduation Rate (%)");
+      updateTextBox(2);
+    }
+    else if(slideIndex===3){
+      showYearButtons(slideIndex);
+      drawChart(getAverageDebtforYear(2024),2024,"Average Net Tuition Cost","Net Tuition($)");
+      updateTextBox(3);
+    }
+    else if(slideIndex==4){
+      showYearButtons(slideIndex);
+      drawScatterPlot(getDebtIncomeRatio(2024),2024);
+      updateTextBox(4);
+    }
+    else{
+      clearButtons();
+    }
+  }
+    
+  let currentSlide = 1;
+  updateSlide(currentSlide);
+
+  const pagelabels={
+    1: "Median Income",
+    2: "Graduation Rate",
+    3: "Average Net Tuiton",
+    4: "Tuition vs Income"
+
+  }
+  const buttonContainer = d3.select("#buttons");
+  const navbutton = d3.select("body").append("div").attr("id", "nav-buttons");
+
+
+  for (let i = 1; i <= 4; i++) {
+  navbutton.append("button")
+    .text(pagelabels[i])
+    .on("click", () => {
+      currentSlide = i;
+      updateSlide(i);
+    });
+}
   }).catch(error => {
     console.error("CSV loading failed:", error);
   });
