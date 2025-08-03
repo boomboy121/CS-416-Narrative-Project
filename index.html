@@ -39,17 +39,16 @@
       background-color: orange;
   }
     #tooltip {
-        position: absolute;
-  display: none;
-  background: white;
-  border: 1px solid black;
-  padding: 6px 10px;
-  font-size: 16px;
-  pointer-events: none;
-  color: black;
-  border-radius: 4px;
-  box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
-  z-index: 9999;
+      position: absolute;
+      display: none;
+      background: white;
+      border: 1px solid black;
+      padding: 5px 10px;
+      font-size: 15px;
+      pointer-events: none;
+      color: black;
+      border-radius: 4px;
+      box-shadow: 2px 2px 2px black;
     }
   </style>
 </head>
@@ -93,9 +92,9 @@
   .text("For many Americans there is a preception that private colleges are more prestigous and offer better outcomes but is that really true?");
 
   const textBox= svg.append("foreignObject")
-  .attr("x", margin.left)
+  .attr("x", margin.left+30)
   .attr("y", height/4)
-  .attr("width",width/4)
+  .attr("width",width/3.5)
   .attr("height", height*.75)
   .style("display", "none");
   
@@ -375,7 +374,7 @@
     .style("justify-content", "center")
     .style("gap", "10px");
 
-  // Add buttons
+
   const years = [2021, 2022, 2023, 2024];
   years.forEach(year => {
     div.append("button")
@@ -453,8 +452,6 @@
       updateSlide(i);
     });
 }
-  }).catch(error => {
-    console.error("CSV loading failed:", error);
   });
 </script>
 
