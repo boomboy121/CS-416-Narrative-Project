@@ -121,7 +121,7 @@
 
 
   const textBoxDiv = textBox.append("xhtml:div")
-  .style("font-size", Math.min(width, window.innerHeight) * 0.015 +"px")
+  .style("font-size", Math.max(12, Math.min(width, window.innerHeight) * 0.015) + "px")
   .style("font-family", "sans-serif")
   .style("color", "black")
   .style("border", "2px solid black")
